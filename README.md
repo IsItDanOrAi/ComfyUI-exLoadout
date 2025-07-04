@@ -1,12 +1,12 @@
-# exLoadout – Excel‑Based Loadout Manager for ComfyUI 
-
-
-![image](https://github.com/user-attachments/assets/3603c82d-c3cd-445e-b2f9-10e9aaf9c68c)
+# exLoadout – Excel Based Loadout Manager for ComfyUI 
+![Logo](https://github.com/user-attachments/assets/4108d366-1306-4db4-b25c-56cae69e9957)
 
 
 ### What It Is
 
 exLoadout is a suite of lightweight ComfyUI custom nodes that let you define and switch between full “loadouts” stored in an Excel sheet. A loadout could include any node inputs that expect string values—models (checkpoints, CLIP, VAE, ControlNets, LoRAs, UNets), numeric or text variables (CFG, sampler names, scheduler types, etc.)—all pulled from a row in your sheet. By selecting a row, you instantly apply all of its settings in your workflow, with built‑in support for editing and reading those cells right inside the UI.
+
+![image](https://github.com/user-attachments/assets/3603c82d-c3cd-445e-b2f9-10e9aaf9c68c)
 
 ### Installation
 
