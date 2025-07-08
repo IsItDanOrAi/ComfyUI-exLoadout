@@ -1,0 +1,14 @@
+[project]
+name = "comfyui-exLoadout"
+description = "exLoadout is a suite of lightweight ComfyUI custom nodes that let you define and switch between full loadouts stored in an Excel sheet. A loadout could include any node inputs that expect string values—models (checkpoints, CLIP, VAE, ControlNets, LoRAs, UNets), numeric or text variables (CFG, sampler names, scheduler types, etc.)—all pulled from a row in your sheet. By selecting a row, you instantly apply all of its settings in your workflow, with built‑in support for editing and reading those cells right inside the UI."
+version = "1.0.0"
+license = { file = "LICENSE" }
+
+[project.urls]
+Repository = "https://github.com/IsItDanOrAi/ComfyUI-exLoadout"
+#  Used by Comfy Registry https://comfyregistry.org
+
+[tool.comfy]
+PublisherId = ""
+DisplayName = "ComfyUI-exLoadout"
+Icon = ""
