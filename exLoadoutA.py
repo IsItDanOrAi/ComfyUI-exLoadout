@@ -2,12 +2,53 @@ import openpyxl
 import os
 from typing import Union
 
+def get_full_path_or_raise(base_folder, file_path):
+    """
+    Securely resolve file paths within a designated directory.
+    
+    Args:
+        base_folder: The base folder name (use "." for current directory)
+        file_path: The requested file path
+        
+    Returns:
+        str: The absolute path if valid
+        
+    Raises:
+        ValueError: If the path is invalid or outside the allowed directory
+    """
+    # Get the directory where the script is located
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    
+    # If base_folder is ".", use the current directory, otherwise create subdirectory path
+    if base_folder == ".":
+        base_dir = current_dir
+    else:
+        base_dir = os.path.join(current_dir, base_folder)
+    
+    # Normalize the file path to prevent directory traversal
+    normalized_file_path = os.path.normpath(file_path)
+    
+    # Check for directory traversal attempts
+    if os.path.isabs(normalized_file_path) or normalized_file_path.startswith('..'):
+        raise ValueError("Invalid file path. Absolute paths and parent directory references are not allowed.")
+    
+    # Construct the full path
+    full_path = os.path.join(base_dir, normalized_file_path)
+    
+    # Resolve any remaining relative components
+    resolved_path = os.path.abspath(full_path)
+    
+    # Ensure the resolved path is still within the base directory
+    if not resolved_path.startswith(os.path.abspath(base_dir)):
+        raise ValueError("Invalid file path. Path must be within the designated directory.")
+    
+    return resolved_path
+
 # Hack: string type that is always equal in not equal comparisons
 class AnyType(str):
     def __ne__(self, __value: object) -> bool:
         return False
 
-# Our any instance wants to be a wildcard string
 ANY = AnyType("*")
 
 class exLoadoutSeg:
@@ -15,35 +56,43 @@ class exLoadoutSeg:
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "excel_path": ("STRING", {"default": os.path.join("exLoadoutList.xlsx")}),
+                "excel_path": ("STRING", {"default": "exLoadoutList.xlsx"}),  # Just the filename
                 "sheet_name": ("STRING", {"default": "KSAMPLER"}),
                 "row_number": ("INT", {"default": 1, "min": 1, "max": 1000, "step": 1}),
                 "search_string": ("STRING", {"default": ""}),
             }
         }
     
-    # Updated return types to include Column F
     RETURN_TYPES = (ANY, ANY, ANY, ANY, ANY, ANY, "STRING")
     RETURN_NAMES = ("Column A", "Column B", "Column C", "Column D", "Column E", "Column F", "Outputs")
-    
-    # Set all outputs except the summary to be lists
     OUTPUT_IS_LIST = (True, True, True, True, True, True, False)
-    
     FUNCTION = "process_excel"
     CATEGORY = "exLoadout"
-    DESCRIPTION = ("Reads values from columns A through F for a specified row number in an Excel spreadsheet. Can also search for a string in Column A.")
+    DESCRIPTION = ("Reads values from columns A through F for a specified row number in an Excel spreadsheet. "
+                   "Can also search for a string in Column A.")
     NAME = "exLoadoutSeg (List)"
     
     def process_excel(self, excel_path, sheet_name, row_number, search_string):
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        full_excel_path = os.path.join(current_dir, excel_path)
+        # Secure path resolution - look in current directory (ComfyUI-exLoadout folder)
+        full_excel_path = get_full_path_or_raise(".", excel_path)
+        
+        # Validate file extension
+        if not full_excel_path.lower().endswith(".xlsx"):
+            raise ValueError("Invalid file type. Only .xlsx files are supported.")
+        
+        # Check if file exists
         if not os.path.exists(full_excel_path):
-            raise FileNotFoundError(f"Excel file not found: {full_excel_path}")
+            # Provide more detailed error information
+            base_dir = os.path.dirname(os.path.abspath(__file__))
+            raise FileNotFoundError(f"Excel file not found: {os.path.basename(full_excel_path)}\n"
+                                  f"Expected location: {full_excel_path}\n"
+                                  f"Make sure the file exists in: {base_dir}")
         
         workbook = openpyxl.load_workbook(full_excel_path)
+        
         if sheet_name not in workbook.sheetnames:
             workbook.close()
-            raise ValueError(f"Sheet '{sheet_name}' not found in the Excel file")
+            raise ValueError(f"Sheet '{sheet_name}' not found in the Excel file.")
         
         sheet = workbook[sheet_name]
         
@@ -62,23 +111,17 @@ class exLoadoutSeg:
                 workbook.close()
                 raise ValueError(f"Search string '{search_string}' not found in Column A.")
         
-        # Check if row number is valid
         if actual_row < 1 or actual_row > sheet.max_row:
             workbook.close()
-            raise ValueError(f"Row number {actual_row} is out of range. The sheet has {sheet.max_row} rows.")
+            raise ValueError(f"Row number {actual_row} is out of range. Sheet has {sheet.max_row} rows.")
         
-        # Get the row data for columns A through F, preserving original types
-        row_data = [sheet.cell(row=actual_row, column=col).value 
-                    for col in range(1, 7)]  # Columns A through F
-        
-        # Handle None values by converting to empty string
+        row_data = [sheet.cell(row=actual_row, column=col).value for col in range(1, 7)]  # A-F
         row_data = ['' if value is None else value for value in row_data]
-        
         workbook.close()
         
-        # Create outputs summary with the requested format including % symbols
-        # Convert to string for summary, but preserve original type in the lists
         outputs_summary = f"%A: {row_data[0]} %B: {row_data[1]} %C: {row_data[2]} %D: {row_data[3]} %E: {row_data[4]} %F: {row_data[5]} %"
         
-        # Wrap each value in a list to maintain list compatibility
         return ([row_data[0]], [row_data[1]], [row_data[2]], [row_data[3]], [row_data[4]], [row_data[5]], outputs_summary)
+
+NODE_CLASS_MAPPINGS = {"exLoadoutSeg": exLoadoutSeg}
+NODE_DISPLAY_NAME_MAPPINGS = {"exLoadoutSeg": "exLoadout Seg"}
