@@ -8,6 +8,11 @@ exLoadout is a suite of lightweight ComfyUI custom nodes that let you define and
 
 ![image](https://github.com/user-attachments/assets/3603c82d-c3cd-445e-b2f9-10e9aaf9c68c)
 
+### UPDATES:
+V1.1 
+    * Security updates across all nodes.
+    * exLoadoutSelector - Added random Loadout functionality
+
 ### Installation
 
     Download or clone this repo, ensuring the ComfyUI-exLoadout folder is placed inside your ComfyUI/custom_nodes/ folder.
